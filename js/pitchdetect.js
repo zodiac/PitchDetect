@@ -280,64 +280,25 @@ function autoCorrelate( buf, sampleRate ) {
 //	var best_frequency = sampleRate/best_offset;
 }
 
+var pitches = [];
+
 function updatePitch( time ) {
 	var cycles = new Array;
 	analyser.getByteTimeDomainData( buf );
 
-/*
-// old zero-crossing code
-
-	var i=0;
-	// find the first point
-	var last_zero = findNextPositiveZeroCrossing( 0 );
-
-	var n=0;
-	// keep finding points, adding cycle lengths to array
-	while ( last_zero != -1) {
-		var next_zero = findNextPositiveZeroCrossing( last_zero + 1 );
-		if (next_zero > -1)
-			cycles.push( next_zero - last_zero );
-		last_zero = next_zero;
-
-		n++;
-		if (n>1000)
-			break;
-	}
-
-	// 1?: average the array
-	var num_cycles = cycles.length;
-	var sum = 0;
-	var pitch = 0;
-
-	for (var i=0; i<num_cycles; i++) {
-		sum += cycles[i];
-	}
-
-	if (num_cycles) {
-		sum /= num_cycles;
-		pitch = audioContext.sampleRate/sum;
-	}
-
-// confidence = num_cycles / num_possible_cycles = num_cycles / (audioContext.sampleRate/)
-	var confidence = (num_cycles ? ((num_cycles/(pitch * buflen / audioContext.sampleRate)) * 100) : 0);
-*/
-
-/*
-	console.log( 
-		"Cycles: " + num_cycles + 
-		" - average length: " + sum + 
-		" - pitch: " + pitch + "Hz " +
-		" - note: " + noteFromPitch( pitch ) +
-		" - confidence: " + confidence + "% "
-		);
-*/
-	// possible other approach to confidence: sort the array, take the median; go through the array and compute the average deviation
 	autoCorrelate( buf, audioContext.sampleRate );
 
-// 	detectorElem.className = (confidence>50)?"confident":"vague";
+	pitches.push(currentPitch);
+	if (pitches.length > 200) {
+		pitches = pitches.slice(1, pitches.length - 1);
+	}
+	pitchElem.innerText = pitches;
 
 	canvasContext.clearRect(0,0,WIDTH,HEIGHT);
-
+	for (var i=0; i<pitches.length; i++) {
+		canvasContext.fillRect(Math.floor(pitches[i]), i, 1, 1)
+	}
+	/*
  	if (confidence <10) {
  		detectorElem.className = "vague";
 	 	pitchElem.innerText = "--";
@@ -371,6 +332,7 @@ function updatePitch( time ) {
 			detuneAmount.innerHTML = Math.abs( Math.floor( detune ) );
 		}
 	}
+	*/
 
 	if (!window.requestAnimationFrame)
 		window.requestAnimationFrame = window.webkitRequestAnimationFrame;
